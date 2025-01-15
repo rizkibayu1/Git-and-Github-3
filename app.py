@@ -6,32 +6,33 @@ import matplotlib.ticker as ticker
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
 
-# File Upload Section
+# Upload Files Section
 st.header("Upload Your Reports")
-
-# Upload Files
 uploaded_file_1 = st.file_uploader("Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"])
 uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"])
 
-# Checkbox for computation options
-st.header("Select Computation Options")
-compute_text_to_column = st.checkbox("Data Rapi")
+# Checkbox Section for Piutang Overdue Report
+st.header("Select Computation Options for Piutang Overdue")
+compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
 compute_overdue_table = st.checkbox("Tabel Over Due")
 compute_overdue_chart = st.checkbox("Grafik Over Due")
 
-# Helper function to process reports
+# Checkbox Section for EDI File Report
+st.header("Select Computation Options for EDI File")
+compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
+
+# Function to process Piutang Overdue report
 def process_piutang_overdue(file):
     if file:
         try:
-            # Read file
             if file.name.endswith(".xlsx"):
                 df = pd.read_excel(file)
             else:
                 df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
 
             # Data Rapi
-            if compute_text_to_column:
-                st.write("### Data Rapi")
+            if compute_text_to_column_overdue:
+                st.write("### Data Rapi (Piutang Overdue)")
                 st.dataframe(df)
 
             # Tabel Over Due
@@ -85,18 +86,18 @@ def process_piutang_overdue(file):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
+# Function to process EDI File report
 def process_edi_file(file):
     if file:
         try:
-            # Read file
             if file.name.endswith(".xlsx"):
                 df = pd.read_excel(file)
             else:
                 df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
 
             # Data Rapi
-            if compute_text_to_column:
-                st.write("### Data Rapi")
+            if compute_text_to_column_edi:
+                st.write("### Data Rapi (EDI File)")
                 st.dataframe(df)
 
         except Exception as e:
