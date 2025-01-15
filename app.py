@@ -8,13 +8,31 @@ st.title("📊 Auto Report Processor & Dashboard")
 
 # First Report: Piutang Overdue
 st.header("📂 Piutang Overdue Report")
+
+# Checklist for analysis options
+piutang_options = st.multiselect(
+    "Select the analyses to perform on Piutang Overdue report:",
+    options=["Summary of OVER DUE Categories", "Bar Plot Visualization", "Highest & Lowest Values"],
+    default=["Summary of OVER DUE Categories", "Bar Plot Visualization"]
+)
+
+# File uploader
 uploaded_file_1 = st.file_uploader("Upload your .txt or .xlsx Piutang Overdue report file", type=["txt", "xlsx"], key="file1")
 
 # Second Report: EDI File
 st.header("📂 EDI File Report")
+
+# Checklist for analysis options
+edi_options = st.multiselect(
+    "Select the analyses to perform on EDI File report:",
+    options=["Summary Statistics", "Data Description", "Custom Analysis"],
+    default=["Summary Statistics", "Data Description"]
+)
+
+# File uploader
 uploaded_file_2 = st.file_uploader("Upload your .txt or .xlsx EDI File report", type=["txt", "xlsx"], key="file2")
 
-# Process the first report (Piutang Overdue)
+# --- Processing the first report (Piutang Overdue) ---
 if uploaded_file_1:
     try:
         if uploaded_file_1.name.endswith(".xlsx"):
@@ -25,23 +43,26 @@ if uploaded_file_1:
         st.write("### Uploaded Piutang Overdue Report:")
         st.dataframe(df1)
 
-        # Process the "OVER DUE" and "MTXVAL" columns
-        if "OVER DUE" in df1.columns and "MTXVAL" in df1.columns:
-            bins = [1, 14, 30, 60, float('inf')]
-            labels = ["1-14", "15-30", "31-60", "60+"]
-            df1["OVER DUE Category"] = pd.cut(df1["OVER DUE"], bins=bins, labels=labels, right=True)
+        # 1. Summary of OVER DUE Categories
+        if "Summary of OVER DUE Categories" in piutang_options:
+            if "OVER DUE" in df1.columns and "MTXVAL" in df1.columns:
+                bins = [1, 14, 30, 60, float('inf')]
+                labels = ["1-14", "15-30", "31-60", "60+"]
+                df1["OVER DUE Category"] = pd.cut(df1["OVER DUE"], bins=bins, labels=labels, right=True)
 
-            overdue_summary = df1.groupby("OVER DUE Category").agg(
-                MTXVAL_Sum=("MTXVAL", "sum"),
-                Count=("MTXVAL", "size")
-            ).reset_index()
+                overdue_summary = df1.groupby("OVER DUE Category").agg(
+                    MTXVAL_Sum=("MTXVAL", "sum"),
+                    Count=("MTXVAL", "size")
+                ).reset_index()
 
-            total_mtxval_sum = df1["MTXVAL"].sum()
-            overdue_summary["MTXVAL_Ratio"] = overdue_summary["MTXVAL_Sum"] / total_mtxval_sum
+                total_mtxval_sum = df1["MTXVAL"].sum()
+                overdue_summary["MTXVAL_Ratio"] = overdue_summary["MTXVAL_Sum"] / total_mtxval_sum
 
-            st.write("### OVER DUE Categories and Sum of MTXVAL")
-            st.dataframe(overdue_summary)
+                st.write("### OVER DUE Categories and Sum of MTXVAL")
+                st.dataframe(overdue_summary)
 
+        # 2. Bar Plot Visualization
+        if "Bar Plot Visualization" in piutang_options:
             fig, ax = plt.subplots(figsize=(10, 6))
             bars = ax.bar(overdue_summary["OVER DUE Category"], overdue_summary["MTXVAL_Sum"])
 
@@ -58,14 +79,23 @@ if uploaded_file_1:
 
             st.pyplot(fig)
 
-            st.write("### Ratio of MTXVAL Sum for Each Category Over Total MTXVAL")
-            overdue_summary["MTXVAL_Ratio"] = overdue_summary["MTXVAL_Ratio"].apply(lambda x: f"{x * 100:.2f}%")
-            st.dataframe(overdue_summary[["OVER DUE Category", "MTXVAL_Ratio"]])
+        # 3. Highest & Lowest Values
+        if "Highest & Lowest Values" in piutang_options:
+            numeric_columns = df1.select_dtypes(include=['number']).columns
+            if numeric_columns.any():
+                selected_column = st.selectbox("Select a numeric column for analysis:", numeric_columns)
 
-    except Exception as e:
-        st.error(f"An error occurred with the Piutang Overdue report: {e}")
+                if selected_column:
+                    highest_value = df1[selected_column].max()
+                    lowest_value = df1[selected_column].min()
 
-# Process the second report (EDI File)
+                    st.write(f"**Highest Value in {selected_column}:** {highest_value}")
+                    st.write(f"**Lowest Value in {selected_column}:** {lowest_value}")
+
+                    st.write("### Detailed View (Editable)")
+                    st.dataframe(df1.sort_values(by=selected_column, ascending=False))
+
+# --- Processing the second report (EDI File) ---
 if uploaded_file_2:
     try:
         if uploaded_file_2.name.endswith(".xlsx"):
@@ -76,10 +106,21 @@ if uploaded_file_2:
         st.write("### Uploaded EDI File Report:")
         st.dataframe(df2)
 
-        # Example Analysis (Add your logic here)
-        st.write("### Example Analysis for EDI File:")
-        st.write("This section can be customized to perform specific analyses for the EDI file.")
-        st.dataframe(df2.describe())
+        # 1. Summary Statistics
+        if "Summary Statistics" in edi_options:
+            st.write("### Summary Statistics for EDI File:")
+            st.dataframe(df2.describe())
+
+        # 2. Data Description
+        if "Data Description" in edi_options:
+            st.write("### Data Description:")
+            st.write(df2.info())
+
+        # 3. Custom Analysis
+        if "Custom Analysis" in edi_options:
+            st.write("### Custom Analysis for EDI File:")
+            st.write("This section can be customized to perform specific analyses for the EDI file.")
+            st.dataframe(df2.head())
 
     except Exception as e:
         st.error(f"An error occurred with the EDI File report: {e}")
