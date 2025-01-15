@@ -123,4 +123,4 @@ if uploaded_file_2:
             st.dataframe(df2.head())
 
     except Exception as e:
-        st.error(f"An error occurred with the EDI File report: {e}")
+        st.error(f"An error occurred while processing the EDI File report: {e}")
