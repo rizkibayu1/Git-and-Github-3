@@ -9,6 +9,7 @@ st.title("📊 Auto Report Processor & Dashboard")
 # File Upload Section
 st.header("Upload Your Reports")
 
+# Upload Files
 uploaded_file_1 = st.file_uploader("Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"])
 uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"])
 
@@ -18,27 +19,25 @@ compute_text_to_column = st.checkbox("Data Rapi")
 compute_overdue_table = st.checkbox("Tabel Over Due")
 compute_overdue_chart = st.checkbox("Grafik Over Due")
 
-# Helper function to process the uploaded files
-def process_file(file, file_title):
+# Helper function to process reports
+def process_piutang_overdue(file):
     if file:
         try:
-            # Process XLSX Files
+            # Read file
             if file.name.endswith(".xlsx"):
                 df = pd.read_excel(file)
-            # Process TXT Files
-            elif file.name.endswith(".txt"):
+            else:
                 df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
 
-            st.write(f"### {file_title}")
-            st.dataframe(df)
-
+            # Data Rapi
             if compute_text_to_column:
                 st.write("### Data Rapi")
                 st.dataframe(df)
 
-            if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
-                if compute_overdue_table:
-                    st.write("### Tabel Over Due")
+            # Tabel Over Due
+            if compute_overdue_table:
+                st.write("### Tabel Over Due")
+                if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
                     bins = [1, 14, 30, 60, float('inf')]
                     labels = ["1-14", "15-30", "31-60", "60+"]
                     df["OVER DUE Category"] = pd.cut(df["OVER DUE"], bins=bins, labels=labels, right=True)
@@ -49,11 +48,24 @@ def process_file(file, file_title):
                     ).reset_index()
 
                     st.dataframe(overdue_summary)
+                else:
+                    st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
-                if compute_overdue_chart:
-                    st.write("### Grafik Over Due")
+            # Grafik Over Due
+            if compute_overdue_chart:
+                st.write("### Grafik Over Due")
+                if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
+                    bins = [1, 14, 30, 60, float('inf')]
+                    labels = ["1-14", "15-30", "31-60", "60+"]
+                    df["OVER DUE Category"] = pd.cut(df["OVER DUE"], bins=bins, labels=labels, right=True)
+
+                    overdue_summary = df.groupby("OVER DUE Category").agg(
+                        MTXVAL_Sum=("MTXVAL", "sum"),
+                        Count=("MTXVAL", "size")
+                    ).reset_index()
+
+                    # Plot
                     fig, ax = plt.subplots(figsize=(10, 6))
-
                     bars = ax.bar(overdue_summary["OVER DUE Category"], overdue_summary["MTXVAL_Sum"])
 
                     for bar, count, sum_val in zip(bars, overdue_summary["Count"], overdue_summary["MTXVAL_Sum"]):
@@ -67,13 +79,29 @@ def process_file(file, file_title):
                     ax.set_ylabel("Sum of MTXVAL")
                     ax.set_title("Sum of MTXVAL for Different OVER DUE Categories")
                     st.pyplot(fig)
-
-            else:
-                st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
+                else:
+                    st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-# Process each uploaded file
-process_file(uploaded_file_1, "Piutang Overdue")
-process_file(uploaded_file_2, "EDI File")
+def process_edi_file(file):
+    if file:
+        try:
+            # Read file
+            if file.name.endswith(".xlsx"):
+                df = pd.read_excel(file)
+            else:
+                df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
+
+            # Data Rapi
+            if compute_text_to_column:
+                st.write("### Data Rapi")
+                st.dataframe(df)
+
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+# Process uploaded files
+process_piutang_overdue(uploaded_file_1)
+process_edi_file(uploaded_file_2)
