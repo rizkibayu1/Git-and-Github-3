@@ -20,6 +20,10 @@ if "compute_overdue_chart" not in st.session_state:
     st.session_state.compute_overdue_chart = False
 if "compute_text_to_column_edi" not in st.session_state:
     st.session_state.compute_text_to_column_edi = False
+if "overdue_results" not in st.session_state:
+    st.session_state.overdue_results = None
+if "edi_results" not in st.session_state:
+    st.session_state.edi_results = None
 
 # Sidebar Menu
 with st.sidebar:
@@ -69,6 +73,9 @@ def process_piutang_overdue(file):
                 st.write("### Data Rapi (Piutang Overdue)")
                 st.dataframe(df)
 
+                # Store the results in session state to persist
+                st.session_state.overdue_results = df
+
                 # Create Excel file for download
                 excel_file = to_excel(df)
                 st.download_button(
@@ -92,6 +99,9 @@ def process_piutang_overdue(file):
                     ).reset_index()
 
                     st.dataframe(overdue_summary)
+
+                    # Store the results in session state to persist
+                    st.session_state.overdue_results = overdue_summary
 
                     # Create Excel file for download
                     excel_file = to_excel(overdue_summary)
@@ -153,6 +163,9 @@ def process_edi_file(file):
                 st.write("### Data Rapi (EDI File)")
                 st.dataframe(df)
 
+                # Store the results in session state to persist
+                st.session_state.edi_results = df
+
                 # Create Excel file for download
                 excel_file = to_excel(df)
                 st.download_button(
@@ -165,8 +178,22 @@ def process_edi_file(file):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-# Process uploaded files
+# Process uploaded files and display results
 if selected_menu == "Results":
     st.header("Results")
-    process_piutang_overdue(st.session_state.uploaded_file_1)
-    process_edi_file(st.session_state.uploaded_file_2)
+
+    # Reprocess the uploaded files from session state if they exist
+    if st.session_state.uploaded_file_1:
+        process_piutang_overdue(st.session_state.uploaded_file_1)
+
+    if st.session_state.uploaded_file_2:
+        process_edi_file(st.session_state.uploaded_file_2)
+
+    # Display previous results if they exist
+    if st.session_state.overdue_results is not None:
+        st.write("### Previous Results for Piutang Overdue")
+        st.dataframe(st.session_state.overdue_results)
+
+    if st.session_state.edi_results is not None:
+        st.write("### Previous Results for EDI File")
+        st.dataframe(st.session_state.edi_results)
