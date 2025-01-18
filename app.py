@@ -29,21 +29,24 @@ with st.sidebar:
         ["Upload Files", "Results"]
     )
 
+# Upload Files Section
 if selected_menu == "Upload Files":
-    # Upload Piutang Overdue
     st.header("Upload Piutang Overdue Report")
-    st.session_state.uploaded_file_1 = st.file_uploader(
-        "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
-    )
+    if not st.session_state.uploaded_file_1:
+        st.session_state.uploaded_file_1 = st.file_uploader(
+            "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
+        )
+    
     st.session_state.compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
     st.session_state.compute_overdue_table = st.checkbox("Tabel Over Due")
     st.session_state.compute_overdue_chart = st.checkbox("Grafik Over Due")
 
-    # Upload EDI File
     st.header("Upload EDI File")
-    st.session_state.uploaded_file_2 = st.file_uploader(
-        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
-    )
+    if not st.session_state.uploaded_file_2:
+        st.session_state.uploaded_file_2 = st.file_uploader(
+            "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
+        )
+    
     st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
 # Function to create Excel file from DataFrame
@@ -165,8 +168,19 @@ def process_edi_file(file):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-# Process uploaded files
+# Results Section
 if selected_menu == "Results":
     st.header("Results")
-    process_piutang_overdue(st.session_state.uploaded_file_1)
-    process_edi_file(st.session_state.uploaded_file_2)
+    
+    # Show file name and options to modify checkboxes in Results
+    if st.session_state.uploaded_file_1:
+        st.write(f"### Piutang Overdue Report: {st.session_state.uploaded_file_1.name}")
+        st.session_state.compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", value=st.session_state.compute_text_to_column_overdue)
+        st.session_state.compute_overdue_table = st.checkbox("Tabel Over Due", value=st.session_state.compute_overdue_table)
+        st.session_state.compute_overdue_chart = st.checkbox("Grafik Over Due", value=st.session_state.compute_overdue_chart)
+        process_piutang_overdue(st.session_state.uploaded_file_1)
+
+    if st.session_state.uploaded_file_2:
+        st.write(f"### EDI File: {st.session_state.uploaded_file_2.name}")
+        st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)", value=st.session_state.compute_text_to_column_edi)
+        process_edi_file(st.session_state.uploaded_file_2)
