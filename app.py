@@ -15,6 +15,7 @@ with st.sidebar:
         ["Upload Files", "Results"]
     )
 
+# File upload section
 if selected_menu == "Upload Files":
     # Upload Piutang Overdue
     st.header("Upload Piutang Overdue Report")
@@ -151,11 +152,11 @@ def process_edi_file(file):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-# Process uploaded files and display results
+# Results section with file persistence
 if selected_menu == "Results":
     st.header("Results")
 
-    # Reprocess the uploaded files if they exist
+    # Persist uploaded files for results
     if uploaded_file_1:
         process_piutang_overdue(uploaded_file_1)
 
