@@ -6,6 +6,12 @@ import matplotlib.ticker as ticker
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
 
+# Initialize session state for file uploads
+if "uploaded_file_1" not in st.session_state:
+    st.session_state.uploaded_file_1 = None
+if "uploaded_file_2" not in st.session_state:
+    st.session_state.uploaded_file_2 = None
+
 # Sidebar Menu
 with st.sidebar:
     st.header("Navigation")
@@ -17,8 +23,8 @@ with st.sidebar:
 if selected_menu == "Upload Files":
     # Upload Piutang Overdue
     st.header("Upload Piutang Overdue Report")
-    uploaded_file_1 = st.file_uploader(
-        "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"]
+    st.session_state.uploaded_file_1 = st.file_uploader(
+        "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
     )
     compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
     compute_overdue_table = st.checkbox("Tabel Over Due")
@@ -26,8 +32,8 @@ if selected_menu == "Upload Files":
 
     # Upload EDI File
     st.header("Upload EDI File")
-    uploaded_file_2 = st.file_uploader(
-        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"]
+    st.session_state.uploaded_file_2 = st.file_uploader(
+        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
     )
     compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
@@ -118,5 +124,5 @@ def process_edi_file(file):
 # Process uploaded files
 if selected_menu == "Results":
     st.header("Results")
-    process_piutang_overdue(uploaded_file_1)
-    process_edi_file(uploaded_file_2)
+    process_piutang_overdue(st.session_state.uploaded_file_1)
+    process_edi_file(st.session_state.uploaded_file_2)
