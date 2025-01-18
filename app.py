@@ -22,19 +22,28 @@ uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt
 # Checkbox Section for EDI File Report
 compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
+# Helper function to load data
+def load_data(file):
+    """Load data from .xlsx or .txt and return as DataFrame."""
+    if file.name.endswith(".xlsx"):
+        return pd.read_excel(file), False  # False indicates no text-to-column processing
+    elif file.name.endswith(".txt"):
+        return pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False), True
+    return None, None
+
 # Function to process Piutang Overdue report
 def process_piutang_overdue(file):
     if file:
         try:
-            if file.name.endswith(".xlsx"):
-                df = pd.read_excel(file)
-            else:
-                df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
+            df, needs_text_to_column = load_data(file)
 
             # Data Rapi
             if compute_text_to_column_overdue:
                 st.write("### Data Rapi (Piutang Overdue)")
-                st.dataframe(df)
+                if needs_text_to_column:
+                    st.dataframe(df)  # Show raw delimited data for .txt
+                else:
+                    st.dataframe(df)  # Show the already clean data for .xlsx
 
             # Tabel Over Due
             if compute_overdue_table:
@@ -91,10 +100,7 @@ def process_piutang_overdue(file):
 def process_edi_file(file):
     if file:
         try:
-            if file.name.endswith(".xlsx"):
-                df = pd.read_excel(file)
-            else:
-                df = pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False)
+            df, needs_text_to_column = load_data(file)
 
             # Data Rapi
             if compute_text_to_column_edi:
