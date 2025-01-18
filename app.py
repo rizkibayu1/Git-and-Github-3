@@ -1,84 +1,115 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
-# Helper Functions
-def process_file(file):
-    try:
-        if file.name.endswith('.txt'):
-            df = pd.read_csv(file, delimiter="\t")  # Default to tab-separated
-        elif file.name.endswith('.xlsx'):
-            df = pd.read_excel(file)
-        else:
-            st.error("Unsupported file type. Please upload a .txt or .xlsx file.")
-            return None
-    except Exception as e:
-        st.error(f"Error processing file: {e}")
-        return None
-    return df
+# Streamlit App Title
+st.title("📊 Auto Report Processor & Dashboard")
 
-def generate_chart(df, column_name):
-    if column_name not in df.columns:
-        st.error(f"Column '{column_name}' not found in the dataset.")
-        return None
-    fig, ax = plt.subplots()
-    df[column_name].value_counts().plot(kind='bar', ax=ax)
-    ax.set_title(f"Chart for {column_name}")
-    return fig
+# Upload Files Section for Piutang Overdue
+st.header("Upload Piutang Overdue Report")
+uploaded_file_1 = st.file_uploader("Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"])
 
-# Streamlit App
-st.title("Multi-File Processing App")
-st.sidebar.header("Upload Files")
+# Checkbox Section for Piutang Overdue Report
+compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
+compute_overdue_table = st.checkbox("Tabel Over Due")
+compute_overdue_chart = st.checkbox("Grafik Over Due")
 
-# Session State Initialization
-if "uploaded_files" not in st.session_state:
-    st.session_state.uploaded_files = {"file_1": None, "file_2": None}
-if "results_state" not in st.session_state:
-    st.session_state.results_state = {"file_1": {}, "file_2": {}}
+# Upload Files Section for EDI File
+st.header("Upload EDI File Report")
+uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"])
 
-# File Upload Section
-st.sidebar.subheader("File 1")
-file_1 = st.sidebar.file_uploader("Upload File 1", type=["txt", "xlsx"], key="file_1")
-if file_1:
-    st.session_state.uploaded_files["file_1"] = file_1
+# Checkbox Section for EDI File Report
+compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
-st.sidebar.subheader("File 2")
-file_2 = st.sidebar.file_uploader("Upload File 2", type=["txt", "xlsx"], key="file_2")
-if file_2:
-    st.session_state.uploaded_files["file_2"] = file_2
+# Helper function to load data
+def load_data(file):
+    """Load data from .xlsx or .txt and return as DataFrame."""
+    if file.name.endswith(".xlsx"):
+        return pd.read_excel(file), False  # False indicates no text-to-column processing
+    elif file.name.endswith(".txt"):
+        return pd.read_csv(file, delimiter="|", on_bad_lines='skip', low_memory=False), True
+    return None, None
 
-# Processing Files
-for file_key in ["file_1", "file_2"]:
-    file = st.session_state.uploaded_files[file_key]
+# Function to process Piutang Overdue report
+def process_piutang_overdue(file):
     if file:
-        if "df" not in st.session_state.results_state[file_key]:
-            df = process_file(file)
-            if df is not None:
-                st.session_state.results_state[file_key]["df"] = df
+        try:
+            df, needs_text_to_column = load_data(file)
 
-# Display Results for Each File
-for file_key, file_label in [("file_1", "File 1"), ("file_2", "File 2")]:
-    df = st.session_state.results_state[file_key].get("df")
-    if df is not None:
-        st.write(f"### {file_label} Results")
+            # Data Rapi
+            if compute_text_to_column_overdue:
+                st.write("### Data Rapi (Piutang Overdue)")
+                if needs_text_to_column:
+                    st.dataframe(df)  # Show raw delimited data for .txt
+                else:
+                    st.dataframe(df)  # Show the already clean data for .xlsx
 
-        # Checkbox Options
-        data_display = st.checkbox(f"Show Processed Data ({file_label})", key=f"{file_key}_data_display")
-        table_display = st.checkbox(f"Show Data Table ({file_label})", key=f"{file_key}_table_display")
-        chart_display = st.checkbox(f"Show Chart ({file_label})", key=f"{file_key}_chart_display")
+            # Tabel Over Due
+            if compute_overdue_table:
+                st.write("### Tabel Over Due")
+                if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
+                    bins = [1, 14, 30, 60, float('inf')]
+                    labels = ["1-14", "15-30", "31-60", "60+"]
+                    df["OVER DUE Category"] = pd.cut(df["OVER DUE"], bins=bins, labels=labels, right=True)
 
-        if data_display:
-            st.write(f"#### Processed Data for {file_label}")
-            st.write(df.head())
+                    overdue_summary = df.groupby("OVER DUE Category").agg(
+                        MTXVAL_Sum=("MTXVAL", "sum"),
+                        Count=("MTXVAL", "size")
+                    ).reset_index()
 
-        if table_display:
-            st.write(f"#### Full Data Table for {file_label}")
-            st.dataframe(df)
+                    st.dataframe(overdue_summary)
+                else:
+                    st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
-        if chart_display:
-            st.write(f"#### Generate Chart for {file_label}")
-            column_name = st.selectbox(f"Select column for chart ({file_label})", df.columns, key=f"{file_key}_chart_column")
-            if column_name:
-                chart = generate_chart(df, column_name)
-                if chart:
-                    st.pyplot(chart)
+            # Grafik Over Due
+            if compute_overdue_chart:
+                st.write("### Grafik Over Due")
+                if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
+                    bins = [1, 14, 30, 60, float('inf')]
+                    labels = ["1-14", "15-30", "31-60", "60+"]
+                    df["OVER DUE Category"] = pd.cut(df["OVER DUE"], bins=bins, labels=labels, right=True)
+
+                    overdue_summary = df.groupby("OVER DUE Category").agg(
+                        MTXVAL_Sum=("MTXVAL", "sum"),
+                        Count=("MTXVAL", "size")
+                    ).reset_index()
+
+                    # Plot
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    bars = ax.bar(overdue_summary["OVER DUE Category"], overdue_summary["MTXVAL_Sum"])
+
+                    for bar, count, sum_val in zip(bars, overdue_summary["Count"], overdue_summary["MTXVAL_Sum"]):
+                        yval = bar.get_height()
+                        formatted_sum = f"Rp{yval:,.0f}"
+                        label = f"{formatted_sum}\nCount: {count}"
+                        ax.text(bar.get_x() + bar.get_width() / 2, yval + 50000, label, ha='center', va='bottom', fontsize=10)
+
+                    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'Rp{x:,.0f}'))
+                    ax.set_xlabel("OVER DUE Categories")
+                    ax.set_ylabel("Sum of MTXVAL")
+                    ax.set_title("Sum of MTXVAL for Different OVER DUE Categories")
+                    st.pyplot(fig)
+                else:
+                    st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
+
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+# Function to process EDI File report
+def process_edi_file(file):
+    if file:
+        try:
+            df, needs_text_to_column = load_data(file)
+
+            # Data Rapi
+            if compute_text_to_column_edi:
+                st.write("### Data Rapi (EDI File)")
+                st.dataframe(df)
+
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+# Process uploaded files
+process_piutang_overdue(uploaded_file_1)
+process_edi_file(uploaded_file_2)
