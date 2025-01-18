@@ -15,6 +15,13 @@ with st.sidebar:
         ["Upload Files", "Results"]
     )
 
+# Initialize session state for uploaded files
+if 'uploaded_file_1' not in st.session_state:
+    st.session_state['uploaded_file_1'] = None
+
+if 'uploaded_file_2' not in st.session_state:
+    st.session_state['uploaded_file_2'] = None
+
 # File upload section
 if selected_menu == "Upload Files":
     # Upload Piutang Overdue
@@ -32,6 +39,13 @@ if selected_menu == "Upload Files":
         "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
     )
     compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
+
+    # Update session state with the uploaded files
+    if uploaded_file_1 is not None:
+        st.session_state['uploaded_file_1'] = uploaded_file_1
+
+    if uploaded_file_2 is not None:
+        st.session_state['uploaded_file_2'] = uploaded_file_2
 
 # Function to create Excel file from DataFrame
 def to_excel(df):
@@ -155,6 +169,10 @@ def process_edi_file(file):
 # Results section with file persistence
 if selected_menu == "Results":
     st.header("Results")
+
+    # Retrieve uploaded files from session state
+    uploaded_file_1 = st.session_state.get('uploaded_file_1', None)
+    uploaded_file_2 = st.session_state.get('uploaded_file_2', None)
 
     # Persist uploaded files for results
     if uploaded_file_1:
