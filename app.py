@@ -37,9 +37,9 @@ if selected_menu == "Upload Files":
             "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
         )
     
-    st.session_state.compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
-    st.session_state.compute_overdue_table = st.checkbox("Tabel Over Due")
-    st.session_state.compute_overdue_chart = st.checkbox("Grafik Over Due")
+    st.session_state.compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", value=st.session_state.compute_text_to_column_overdue)
+    st.session_state.compute_overdue_table = st.checkbox("Tabel Over Due", value=st.session_state.compute_overdue_table)
+    st.session_state.compute_overdue_chart = st.checkbox("Grafik Over Due", value=st.session_state.compute_overdue_chart)
 
     st.header("Upload EDI File")
     if not st.session_state.uploaded_file_2:
@@ -47,7 +47,7 @@ if selected_menu == "Upload Files":
             "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
         )
     
-    st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
+    st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)", value=st.session_state.compute_text_to_column_edi)
 
 # Function to create Excel file from DataFrame
 def to_excel(df):
@@ -178,9 +178,13 @@ if selected_menu == "Results":
         st.session_state.compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", value=st.session_state.compute_text_to_column_overdue)
         st.session_state.compute_overdue_table = st.checkbox("Tabel Over Due", value=st.session_state.compute_overdue_table)
         st.session_state.compute_overdue_chart = st.checkbox("Grafik Over Due", value=st.session_state.compute_overdue_chart)
+        
+        # Trigger file processing based on checkbox states
         process_piutang_overdue(st.session_state.uploaded_file_1)
 
     if st.session_state.uploaded_file_2:
         st.write(f"### EDI File: {st.session_state.uploaded_file_2.name}")
         st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)", value=st.session_state.compute_text_to_column_edi)
+        
+        # Trigger file processing based on checkbox states
         process_edi_file(st.session_state.uploaded_file_2)
