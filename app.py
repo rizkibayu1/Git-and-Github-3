@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from io import BytesIO
 
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
@@ -45,6 +46,14 @@ if selected_menu == "Upload Files":
     )
     st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
+# Function to create Excel file from DataFrame
+def to_excel(df):
+    # Convert dataframe to Excel and save in BytesIO buffer
+    output = BytesIO()
+    df.to_excel(output, index=False, engine='openpyxl')
+    output.seek(0)
+    return output
+
 # Function to process Piutang Overdue report
 def process_piutang_overdue(file):
     if file:
@@ -60,6 +69,15 @@ def process_piutang_overdue(file):
                 st.write("### Data Rapi (Piutang Overdue)")
                 st.dataframe(df)
 
+                # Create Excel file for download
+                excel_file = to_excel(df)
+                st.download_button(
+                    label="Download as Excel",
+                    data=excel_file,
+                    file_name="data_rapi_piutang_overdue.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
             # Tabel Over Due
             if st.session_state.compute_overdue_table:
                 st.write("### Tabel Over Due")
@@ -74,6 +92,15 @@ def process_piutang_overdue(file):
                     ).reset_index()
 
                     st.dataframe(overdue_summary)
+
+                    # Create Excel file for download
+                    excel_file = to_excel(overdue_summary)
+                    st.download_button(
+                        label="Download Overdue Summary as Excel",
+                        data=excel_file,
+                        file_name="overdue_summary.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
                 else:
                     st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
@@ -125,6 +152,15 @@ def process_edi_file(file):
             if st.session_state.compute_text_to_column_edi:
                 st.write("### Data Rapi (EDI File)")
                 st.dataframe(df)
+
+                # Create Excel file for download
+                excel_file = to_excel(df)
+                st.download_button(
+                    label="Download as Excel",
+                    data=excel_file,
+                    file_name="data_rapi_edi_file.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
