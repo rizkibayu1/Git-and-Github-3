@@ -7,6 +7,19 @@ from io import BytesIO
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
 
+# Initialize session state for uploaded files
+if 'uploaded_file_1' not in st.session_state:
+    st.session_state['uploaded_file_1'] = None
+
+if 'uploaded_file_2' not in st.session_state:
+    st.session_state['uploaded_file_2'] = None
+
+# Checkbox variables defined at the top level so they are available globally
+compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", key="compute_text_to_column_overdue")
+compute_overdue_table = st.checkbox("Tabel Over Due", key="compute_overdue_table")
+compute_overdue_chart = st.checkbox("Grafik Over Due", key="compute_overdue_chart")
+compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)", key="compute_text_to_column_edi")
+
 # Sidebar Menu
 with st.sidebar:
     st.header("Navigation")
@@ -14,13 +27,6 @@ with st.sidebar:
         "Choose a Section",
         ["Upload Files", "Results"]
     )
-
-# Initialize session state for uploaded files
-if 'uploaded_file_1' not in st.session_state:
-    st.session_state['uploaded_file_1'] = None
-
-if 'uploaded_file_2' not in st.session_state:
-    st.session_state['uploaded_file_2'] = None
 
 # File upload section
 if selected_menu == "Upload Files":
@@ -30,17 +36,11 @@ if selected_menu == "Upload Files":
         "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1", label_visibility="collapsed"
     )
 
-    # Checkbox values (Defined here so that they're always available)
-    compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", key="compute_text_to_column_overdue")
-    compute_overdue_table = st.checkbox("Tabel Over Due", key="compute_overdue_table")
-    compute_overdue_chart = st.checkbox("Grafik Over Due", key="compute_overdue_chart")
-
     # Upload EDI File
     st.header("Upload EDI File")
     uploaded_file_2 = st.file_uploader(
         "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2", label_visibility="collapsed"
     )
-    compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)", key="compute_text_to_column_edi")
 
     # Update session state with the uploaded files
     if uploaded_file_1 is not None:
