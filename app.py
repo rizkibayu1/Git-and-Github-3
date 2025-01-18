@@ -30,7 +30,7 @@ if selected_menu == "Upload Files":
         "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1", label_visibility="collapsed"
     )
 
-    # Checkbox values (No need to store in session_state)
+    # Checkbox values (Defined here so that they're always available)
     compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)", key="compute_text_to_column_overdue")
     compute_overdue_table = st.checkbox("Tabel Over Due", key="compute_overdue_table")
     compute_overdue_chart = st.checkbox("Grafik Over Due", key="compute_overdue_chart")
