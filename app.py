@@ -6,19 +6,20 @@ import matplotlib.ticker as ticker
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
 
-# Upload Files Section
-st.header("Upload Your Reports")
+# Upload Files Section for Piutang Overdue
+st.header("Upload Piutang Overdue Report")
 uploaded_file_1 = st.file_uploader("Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"])
-uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"])
 
 # Checkbox Section for Piutang Overdue Report
-st.header("Select Computation Options for Piutang Overdue")
 compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
 compute_overdue_table = st.checkbox("Tabel Over Due")
 compute_overdue_chart = st.checkbox("Grafik Over Due")
 
+# Upload Files Section for EDI File
+st.header("Upload EDI File Report")
+uploaded_file_2 = st.file_uploader("Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"])
+
 # Checkbox Section for EDI File Report
-st.header("Select Computation Options for EDI File")
 compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
 
 # Function to process Piutang Overdue report
