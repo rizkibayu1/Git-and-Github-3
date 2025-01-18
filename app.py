@@ -15,12 +15,24 @@ with st.sidebar:
         ["Upload Files", "Results"]
     )
 
-# Initialize session state for uploaded files
+# Initialize session state for uploaded files and checkboxes
 if 'uploaded_file_1' not in st.session_state:
     st.session_state['uploaded_file_1'] = None
 
 if 'uploaded_file_2' not in st.session_state:
     st.session_state['uploaded_file_2'] = None
+
+if 'compute_text_to_column_overdue' not in st.session_state:
+    st.session_state['compute_text_to_column_overdue'] = False
+
+if 'compute_overdue_table' not in st.session_state:
+    st.session_state['compute_overdue_table'] = False
+
+if 'compute_overdue_chart' not in st.session_state:
+    st.session_state['compute_overdue_chart'] = False
+
+if 'compute_text_to_column_edi' not in st.session_state:
+    st.session_state['compute_text_to_column_edi'] = False
 
 # File upload section
 if selected_menu == "Upload Files":
@@ -29,16 +41,16 @@ if selected_menu == "Upload Files":
     uploaded_file_1 = st.file_uploader(
         "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
     )
-    compute_text_to_column_overdue = st.checkbox("Data Rapi (Piutang Overdue)")
-    compute_overdue_table = st.checkbox("Tabel Over Due")
-    compute_overdue_chart = st.checkbox("Grafik Over Due")
+    st.session_state['compute_text_to_column_overdue'] = st.checkbox("Data Rapi (Piutang Overdue)")
+    st.session_state['compute_overdue_table'] = st.checkbox("Tabel Over Due")
+    st.session_state['compute_overdue_chart'] = st.checkbox("Grafik Over Due")
 
     # Upload EDI File
     st.header("Upload EDI File")
     uploaded_file_2 = st.file_uploader(
         "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
     )
-    compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
+    st.session_state['compute_text_to_column_edi'] = st.checkbox("Data Rapi (EDI File)")
 
     # Update session state with the uploaded files
     if uploaded_file_1 is not None:
@@ -66,7 +78,7 @@ def process_piutang_overdue(file):
                 df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
 
             # Data Rapi
-            if compute_text_to_column_overdue:
+            if st.session_state['compute_text_to_column_overdue']:
                 st.write("### Data Rapi (Piutang Overdue)")
                 st.dataframe(df)
 
@@ -80,7 +92,7 @@ def process_piutang_overdue(file):
                 )
 
             # Tabel Over Due
-            if compute_overdue_table:
+            if st.session_state['compute_overdue_table']:
                 st.write("### Tabel Over Due")
                 if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
                     bins = [1, 14, 30, 60, float("inf")]
@@ -106,7 +118,7 @@ def process_piutang_overdue(file):
                     st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
             # Grafik Over Due
-            if compute_overdue_chart:
+            if st.session_state['compute_overdue_chart']:
                 st.write("### Grafik Over Due")
                 if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
                     bins = [1, 14, 30, 60, float("inf")]
@@ -150,7 +162,7 @@ def process_edi_file(file):
                 df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
 
             # Data Rapi
-            if compute_text_to_column_edi:
+            if st.session_state['compute_text_to_column_edi']:
                 st.write("### Data Rapi (EDI File)")
                 st.dataframe(df)
 
