@@ -39,18 +39,18 @@ if selected_menu == "Upload Files":
     # Upload Piutang Overdue
     st.header("Upload Piutang Overdue Report")
     uploaded_file_1 = st.file_uploader(
-        "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1"
+        "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file1", label_visibility="collapsed"
     )
-    st.session_state['compute_text_to_column_overdue'] = st.checkbox("Data Rapi (Piutang Overdue)")
-    st.session_state['compute_overdue_table'] = st.checkbox("Tabel Over Due")
-    st.session_state['compute_overdue_chart'] = st.checkbox("Grafik Over Due")
+    st.session_state['compute_text_to_column_overdue'] = st.checkbox("Data Rapi (Piutang Overdue)", key="compute_text_to_column_overdue")
+    st.session_state['compute_overdue_table'] = st.checkbox("Tabel Over Due", key="compute_overdue_table")
+    st.session_state['compute_overdue_chart'] = st.checkbox("Grafik Over Due", key="compute_overdue_chart")
 
     # Upload EDI File
     st.header("Upload EDI File")
     uploaded_file_2 = st.file_uploader(
-        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2"
+        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file2", label_visibility="collapsed"
     )
-    st.session_state['compute_text_to_column_edi'] = st.checkbox("Data Rapi (EDI File)")
+    st.session_state['compute_text_to_column_edi'] = st.checkbox("Data Rapi (EDI File)", key="compute_text_to_column_edi")
 
     # Update session state with the uploaded files
     if uploaded_file_1 is not None:
@@ -131,14 +131,14 @@ def process_piutang_overdue(file):
                     ).reset_index()
 
                     # Plot
-                    fig, ax = plt.subplots(figsize=(10, 6))
+                    fig, ax = plt.subplots(figsize=(8, 4))  # Smaller figure size
                     bars = ax.bar(overdue_summary["OVER DUE Category"], overdue_summary["MTXVAL_Sum"])
 
                     for bar, count, sum_val in zip(bars, overdue_summary["Count"], overdue_summary["MTXVAL_Sum"]):
                         yval = bar.get_height()
                         formatted_sum = f"Rp{yval:,.0f}"
                         label = f"{formatted_sum}\nCount: {count}"
-                        ax.text(bar.get_x() + bar.get_width() / 2, yval + 50000, label, ha="center", va="bottom", fontsize=10)
+                        ax.text(bar.get_x() + bar.get_width() / 2, yval + 50000, label, ha="center", va="bottom", fontsize=8)
 
                     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"Rp{x:,.0f}"))
                     ax.set_xlabel("OVER DUE Categories")
@@ -186,9 +186,13 @@ if selected_menu == "Results":
     uploaded_file_1 = st.session_state.get('uploaded_file_1', None)
     uploaded_file_2 = st.session_state.get('uploaded_file_2', None)
 
-    # Persist uploaded files for results
-    if uploaded_file_1:
-        process_piutang_overdue(uploaded_file_1)
+    # Layout in two columns for space efficiency
+    col1, col2 = st.columns(2)
 
-    if uploaded_file_2:
-        process_edi_file(uploaded_file_2)
+    with col1:
+        if uploaded_file_1:
+            process_piutang_overdue(uploaded_file_1)
+
+    with col2:
+        if uploaded_file_2:
+            process_edi_file(uploaded_file_2)
