@@ -23,6 +23,13 @@ def to_excel(df):
     output.seek(0)
     return output
 
+# Function to format numbers as monetary values (e.g., Rp5,000)
+def format_as_rupiah(value):
+    try:
+        return f"Rp{value:,.0f}".replace(",", ".")
+    except ValueError:
+        return value
+
 # Function to process Piutang Overdue report
 def process_piutang_overdue(file):
     if file:
@@ -61,6 +68,8 @@ def process_piutang_overdue(file):
                         Count=("MTXVAL", "size"),
                     ).reset_index()
 
+                    # Format MTXVAL as Rupiah
+                    overdue_summary["MTXVAL_Sum"] = overdue_summary["MTXVAL_Sum"].apply(format_as_rupiah)
                     st.dataframe(overdue_summary)
 
                     excel_file = to_excel(overdue_summary)
@@ -96,11 +105,24 @@ def process_piutang_overdue(file):
                         x="OVER DUE Category",
                         y="MTXVAL_Sum",
                         text="MTXVAL_Sum",
-                        labels={"MTXVAL_Sum": "Total (MTXVAL)"},
-                        title="Sum of MTXVAL for Different OVER DUE Categories",
+                        labels={"MTXVAL_Sum": "Total (MTXVAL)", "Count": "Count"},
+                        title="Sum of MTXVAL and Count for Different OVER DUE Categories",
                     )
-                    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
-                    fig.update_layout(yaxis=dict(title="Sum of MTXVAL"))
+                    fig.for_each_trace(lambda trace: trace.update(
+                        textposition="outside"
+                    ))
+
+                    # Add Count as annotations on bars
+                    for i, row in overdue_summary.iterrows():
+                        fig.add_annotation(
+                            x=row["OVER DUE Category"],
+                            y=row["MTXVAL_Sum"],
+                            text=f"Count: {row['Count']}",
+                            showarrow=False,
+                            yshift=10,
+                            font=dict(size=10, color="black"),
+                        )
+
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning(
