@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from io import BytesIO
 
 # Streamlit App Title
-st.title("📊 Auto Report Processor & Dashboard")
+st.title("Dashboard Monitoring AOS")  # Updated title
 
 # Initialize session state for file uploads and checkboxes
 for key in [
