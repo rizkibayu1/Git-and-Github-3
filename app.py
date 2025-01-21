@@ -98,8 +98,9 @@ def process_piutang_overdue(file):
                     ).reset_index()
 
                     # Ensure MTXVAL remains numeric for the chart
-                    overdue_summary["MTXVAL_Sum_Numeric"] = overdue_summary["MTXVAL_Sum"].str.replace(
-                        "Rp", "", regex=False).str.replace(".", "").astype(float)
+                    overdue_summary["MTXVAL_Sum_Numeric"] = overdue_summary["MTXVAL_Sum"].apply(
+                        lambda x: float(x.replace("Rp", "").replace(".", "")) if isinstance(x, str) else x
+                    )
 
                     # Interactive Dual-Axis Chart with Plotly
                     fig = go.Figure()
