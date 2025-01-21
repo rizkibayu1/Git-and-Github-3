@@ -27,4 +27,7 @@ with tab1:
             if uploaded_file_overdue.name.endswith(".xlsx"):
                 df_overdue = pd.read_excel(uploaded_file_overdue)
             else:
-                df_overdue = pd.read_csv(uploaded_file_overdue, delimiter="|",
+                df_overdue = pd.read_csv(uploaded_file_overdue, delimiter="|", on_bad_lines="skip", low_memory=False)
+
+            # Example transformation (replace with your own processing logic)
+            if "MTXVAL" in df_over
