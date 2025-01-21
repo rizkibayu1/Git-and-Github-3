@@ -2,3 +2,4 @@ streamlit
 pandas
 matplotlib
 openpyxl
+plotly  # Remove this if you're not using Plotly
