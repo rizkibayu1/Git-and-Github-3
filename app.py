@@ -131,7 +131,6 @@ def process_piutang_overdue(file):
 
                     # Update layout for dual-axis chart with adjusted legend
                     fig.update_layout(
-                        title="Sum of MTXVAL and Count for Different OVER DUE Categories",
                         xaxis_title="OVER DUE Category",
                         yaxis_title="MTXVAL Sum (Rp)",
                         yaxis2=dict(
