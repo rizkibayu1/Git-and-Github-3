@@ -28,6 +28,13 @@ def format_as_rupiah(value):
     except ValueError:
         return value
 
+# Function to format dates to DD-MM-YYYY or '5 August 2024'
+def format_as_date(value):
+    try:
+        return pd.to_datetime(value).strftime('%d-%m-%Y')  # For format DD-MM-YYYY
+    except Exception:
+        return value
+
 # Function to process Piutang Overdue report
 def process_piutang_overdue(file):
     if file:
@@ -41,8 +48,24 @@ def process_piutang_overdue(file):
             # Data Rapi
             if st.session_state.compute_text_to_column_overdue:
                 st.write("### Data Rapi (Piutang Overdue)")
+
+                # Format necessary columns
+                columns_to_format = ['MTXVAL', 'TGL INVOICE', 'TGL JATUH TEMPO']
+                for col in columns_to_format:
+                    if col in df.columns:
+                        if col == 'MTXVAL':
+                            df[col] = df[col].apply(format_as_rupiah)
+                        elif col in ['TGL INVOICE', 'TGL JATUH TEMPO']:
+                            df[col] = df[col].apply(format_as_date)
+
+                # For string columns, leave them as they are
+                for col in ['SUBDIST', 'KODE OUTLET', 'KODE SALES', 'NO ORDER']:
+                    if col in df.columns:
+                        df[col] = df[col].astype(str)
+
                 st.dataframe(df)
 
+                # Create Excel download
                 excel_file = to_excel(df)
                 st.download_button(
                     label="Download as Excel",
