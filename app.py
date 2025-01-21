@@ -126,6 +126,7 @@ def process_piutang_overdue(file):
                         textposition="top center",
                         marker=dict(color="red", size=10),
                         hovertemplate="Count: %{y}<extra></extra>",
+                        yaxis="y2",  # Secondary y-axis for the Count line
                     ))
 
                     # Update layout for dual-axis chart
@@ -133,6 +134,12 @@ def process_piutang_overdue(file):
                         title="Sum of MTXVAL and Count for Different OVER DUE Categories",
                         xaxis_title="OVER DUE Category",
                         yaxis_title="MTXVAL Sum (Rp)",
+                        yaxis2=dict(
+                            title="Count",
+                            overlaying="y",
+                            side="right",
+                            showgrid=False,
+                        ),
                         legend_title="Legend",
                         yaxis=dict(tickprefix="Rp"),
                         template="plotly_white",
