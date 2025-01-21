@@ -35,6 +35,12 @@ with tab1:
         "Upload Piutang Overdue (.txt or .xlsx)", type=["txt", "xlsx"], key="file_overdue"
     )
 
+    process_options = {
+        "Remove Duplicates": st.checkbox("Remove Duplicates"),
+        "Sort by MTXVAL": st.checkbox("Sort by MTXVAL"),
+        "Format Columns": st.checkbox("Format Columns"),
+    }
+
     if st.session_state.uploaded_file_overdue:
         try:
             # Determine file type and read the file
@@ -44,10 +50,18 @@ with tab1:
             else:
                 df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
 
-            # Clean and format data
-            if "MTXVAL" in df.columns:
+            # Process options
+            if process_options["Remove Duplicates"]:
+                df = df.drop_duplicates()
+
+            if process_options["Sort by MTXVAL"] and "MTXVAL" in df.columns:
                 df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
-                df["MTXVAL"] = df["MTXVAL"].apply(format_rupiah)
+                df = df.sort_values("MTXVAL", ascending=False)
+
+            if process_options["Format Columns"]:
+                if "MTXVAL" in df.columns:
+                    df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
+                    df["MTXVAL"] = df["MTXVAL"].apply(format_rupiah)
 
             st.write("### Tabel Data (Piutang Overdue)")
             st.dataframe(df)
