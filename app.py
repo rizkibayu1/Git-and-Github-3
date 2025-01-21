@@ -1,17 +1,15 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from io import BytesIO
-import plotly.express as px
 
 # Streamlit App Title
 st.title("📊 Auto Report Processor & Dashboard")
 
 # Initialize session state for file uploads and checkboxes
 for key in [
-    "uploaded_file_piutang", "uploaded_file_edi", 
-    "compute_text_to_column_overdue", "compute_overdue_table", "compute_overdue_chart",
-    "compute_text_to_column_edi"
+    "uploaded_file_piutang", "compute_text_to_column_overdue", 
+    "compute_overdue_table", "compute_overdue_chart"
 ]:
     if key not in st.session_state:
         st.session_state[key] = None if key.startswith("uploaded_file") else False
@@ -34,7 +32,7 @@ def format_as_rupiah(value):
 def process_piutang_overdue(file):
     if file:
         try:
-            # Determine file type
+            # Read file (supports .xlsx and .txt)
             if file.name.endswith(".xlsx"):
                 df = pd.read_excel(file)
             else:
@@ -99,61 +97,52 @@ def process_piutang_overdue(file):
                         Count=("MTXVAL", "size"),
                     ).reset_index()
 
-                    # Interactive Chart with Plotly
-                    fig = px.bar(
-                        overdue_summary,
-                        x="OVER DUE Category",
-                        y="MTXVAL_Sum",
-                        text="MTXVAL_Sum",
-                        labels={"MTXVAL_Sum": "Total (MTXVAL)", "Count": "Count"},
-                        title="Sum of MTXVAL and Count for Different OVER DUE Categories",
-                    )
-                    fig.for_each_trace(lambda trace: trace.update(
-                        textposition="outside"
+                    # Ensure MTXVAL remains numeric for the chart
+                    overdue_summary["MTXVAL_Sum_Numeric"] = overdue_summary["MTXVAL_Sum"].str.replace(
+                        "Rp", "", regex=False).str.replace(".", "").astype(float)
+
+                    # Interactive Dual-Axis Chart with Plotly
+                    fig = go.Figure()
+
+                    # Bar chart for MTXVAL
+                    fig.add_trace(go.Bar(
+                        x=overdue_summary["OVER DUE Category"],
+                        y=overdue_summary["MTXVAL_Sum_Numeric"],
+                        name="MTXVAL Sum",
+                        marker_color="blue",
+                        text=overdue_summary["MTXVAL_Sum"],
+                        textposition="outside",
+                        hovertemplate="MTXVAL Sum: %{y}<extra></extra>",
                     ))
 
-                    # Add Count as annotations on bars
-                    for i, row in overdue_summary.iterrows():
-                        fig.add_annotation(
-                            x=row["OVER DUE Category"],
-                            y=row["MTXVAL_Sum"],
-                            text=f"Count: {row['Count']}",
-                            showarrow=False,
-                            yshift=10,
-                            font=dict(size=10, color="black"),
-                        )
+                    # Line chart for Count
+                    fig.add_trace(go.Scatter(
+                        x=overdue_summary["OVER DUE Category"],
+                        y=overdue_summary["Count"],
+                        name="Count",
+                        mode="lines+markers+text",
+                        text=overdue_summary["Count"],
+                        textposition="top center",
+                        marker=dict(color="red", size=10),
+                        hovertemplate="Count: %{y}<extra></extra>",
+                    ))
+
+                    # Update layout for dual-axis chart
+                    fig.update_layout(
+                        title="Sum of MTXVAL and Count for Different OVER DUE Categories",
+                        xaxis_title="OVER DUE Category",
+                        yaxis_title="MTXVAL Sum (Rp)",
+                        legend_title="Legend",
+                        yaxis=dict(tickprefix="Rp"),
+                        template="plotly_white",
+                        hovermode="x unified",
+                    )
 
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning(
                         "The required columns 'OVER DUE' or 'MTXVAL' are missing in the data."
                     )
-
-        except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
-
-# Function to process EDI File report
-def process_edi_file(file):
-    if file:
-        try:
-            # Determine file type
-            if file.name.endswith(".xlsx"):
-                df = pd.read_excel(file)
-            else:
-                df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
-
-            # Data Rapi
-            if st.session_state.compute_text_to_column_edi:
-                st.write("### Data Rapi (EDI File)")
-                st.dataframe(df)
-
-                excel_file = to_excel(df)
-                st.download_button(
-                    label="Download as Excel",
-                    data=excel_file,
-                    file_name="data_rapi_edi_file.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
 
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
@@ -174,13 +163,3 @@ with tab1:
 
     if st.session_state.uploaded_file_piutang:
         process_piutang_overdue(st.session_state.uploaded_file_piutang)
-
-with tab2:
-    st.header("EDI File Report")
-    st.session_state.uploaded_file_edi = st.file_uploader(
-        "Upload EDI File (.txt or .xlsx)", type=["txt", "xlsx"], key="file_edi"
-    )
-    st.session_state.compute_text_to_column_edi = st.checkbox("Data Rapi (EDI File)")
-
-    if st.session_state.uploaded_file_edi:
-        process_edi_file(st.session_state.uploaded_file_edi)
