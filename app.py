@@ -111,7 +111,7 @@ def process_piutang_overdue(file):
                         y=overdue_summary["MTXVAL_Sum_Numeric"],
                         name="MTXVAL Sum",
                         marker_color="blue",
-                        text=overdue_summary["MTXVAL_Sum"],
+                        text=overdue_summary["MTXVAL_Sum"].apply(format_as_rupiah),  # Apply formatting here
                         textposition="outside",
                         hovertemplate="MTXVAL Sum: %{y}<extra></extra>",
                     ))
