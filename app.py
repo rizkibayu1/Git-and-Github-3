@@ -129,7 +129,7 @@ def process_piutang_overdue(file):
                         yaxis="y2",  # Secondary y-axis for the Count line
                     ))
 
-                    # Update layout for dual-axis chart
+                    # Update layout for dual-axis chart with adjusted legend
                     fig.update_layout(
                         title="Sum of MTXVAL and Count for Different OVER DUE Categories",
                         xaxis_title="OVER DUE Category",
@@ -144,6 +144,13 @@ def process_piutang_overdue(file):
                         yaxis=dict(tickprefix="Rp"),
                         template="plotly_white",
                         hovermode="x unified",
+                        legend=dict(
+                            orientation="h",  # Horizontal layout
+                            yanchor="bottom",  # Align to the bottom
+                            y=1.1,  # Move it above the chart
+                            xanchor="center",
+                            x=0.5,
+                        ),
                     )
 
                     st.plotly_chart(fig, use_container_width=True)
