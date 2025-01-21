@@ -184,8 +184,8 @@ def process_piutang_overdue(file):
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-# Main Tabs for Piutang Overdue and EDI File
-tab1, tab2 = st.tabs(["📄 Piutang Overdue", "📁 EDI File"])
+# Main Tab for Piutang Overdue
+tab1 = st.container()
 
 with tab1:
     st.header("Piutang Overdue Report")
