@@ -6,13 +6,11 @@ from io import BytesIO
 # Streamlit App Title
 st.title("Dashboard Monitoring AOS")
 
-# Initialize session state for file uploads and checkboxes
+# Initialize session state for file uploads
 if "uploaded_file_overdue" not in st.session_state:
     st.session_state.uploaded_file_overdue = None
 if "uploaded_file_opname" not in st.session_state:
     st.session_state.uploaded_file_opname = None
-if "process_opname" not in st.session_state:
-    st.session_state.process_opname = False
 
 # Tabs for Piutang Overdue and Opname Faktur
 tab1, tab2 = st.tabs(["📊 Piutang Overdue", "📋 Opname Faktur"])
@@ -36,9 +34,9 @@ with tab1:
     )
 
     process_options = {
-        "Remove Duplicates": st.checkbox("Remove Duplicates"),
-        "Sort by MTXVAL": st.checkbox("Sort by MTXVAL"),
-        "Format Columns": st.checkbox("Format Columns"),
+        "Data Rapi": st.checkbox("Data Rapi"),
+        "Tabel": st.checkbox("Tabel"),
+        "Grafik": st.checkbox("Grafik"),
     }
 
     if st.session_state.uploaded_file_overdue:
@@ -50,24 +48,30 @@ with tab1:
             else:
                 df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
 
-            # Process options
-            if process_options["Remove Duplicates"]:
-                df = df.drop_duplicates()
-
-            if process_options["Sort by MTXVAL"] and "MTXVAL" in df.columns:
-                df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
-                df = df.sort_values("MTXVAL", ascending=False)
-
-            if process_options["Format Columns"]:
+            # Data Rapi
+            if process_options["Data Rapi"]:
                 if "MTXVAL" in df.columns:
                     df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
                     df["MTXVAL"] = df["MTXVAL"].apply(format_rupiah)
+                st.write("### Data Rapi")
+                st.dataframe(df)
 
-            st.write("### Tabel Data (Piutang Overdue)")
-            st.dataframe(df)
+                # Download processed data
+                excel_file = to_excel(df)
+                st.download_button(
+                    label="Download Data Rapi as Excel",
+                    data=excel_file,
+                    file_name="piutang_overdue_data_rapi.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
 
-            # Create a summary chart
-            if "OVER DUE" in df.columns and "MTXVAL" in df.columns:
+            # Tabel
+            if process_options["Tabel"]:
+                st.write("### Tabel Data (Piutang Overdue)")
+                st.dataframe(df)
+
+            # Grafik
+            if process_options["Grafik"] and "OVER DUE" in df.columns and "MTXVAL" in df.columns:
                 df["MTXVAL_NUMERIC"] = df["MTXVAL"].str.replace(r"[^\d]", "", regex=True).astype(float)
 
                 summary = df.groupby("OVER DUE")["MTXVAL_NUMERIC"].agg(["sum", "count"]).reset_index()
@@ -112,14 +116,6 @@ with tab1:
                 st.write("### Grafik Piutang Overdue")
                 st.plotly_chart(fig, use_container_width=True)
 
-            # Download processed data as Excel
-            excel_file = to_excel(df)
-            st.download_button(
-                label="Download as Excel",
-                data=excel_file,
-                file_name="piutang_overdue.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
@@ -129,9 +125,10 @@ with tab2:
     st.session_state.uploaded_file_opname = st.file_uploader(
         "Upload Opname Faktur (.txt or .xlsx)", type=["txt", "xlsx"], key="file_opname"
     )
-    st.session_state.process_opname = st.checkbox("Proses Text to Column (Opname Faktur)")
 
-    if st.session_state.uploaded_file_opname and st.session_state.process_opname:
+    process_opname = st.checkbox("Proses Text to Column (Opname Faktur)")
+
+    if st.session_state.uploaded_file_opname and process_opname:
         try:
             # Determine file type and read the file
             file = st.session_state.uploaded_file_opname
