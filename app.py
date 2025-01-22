@@ -51,6 +51,7 @@ with tab1:
             # Data Rapi
             if process_options["Data Rapi"]:
                 if "MTXVAL" in df.columns:
+                    df["MTXVAL"] = df["MTXVAL"].astype(str).str.replace(r"[^\d]", "", regex=True)
                     df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
                     df["MTXVAL"] = df["MTXVAL"].apply(format_rupiah)
                 st.write("### Data Rapi")
@@ -118,6 +119,7 @@ with tab1:
 
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
+
 
 # Tab 2: Opname Faktur
 with tab2:
