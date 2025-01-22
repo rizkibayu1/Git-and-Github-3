@@ -5,7 +5,9 @@ import matplotlib.ticker as ticker
 from io import BytesIO
 
 # Streamlit App Title
-st.title("\ud83d\udcca Auto Report Processor & Dashboard")
+st.title("Auto Report Processor & Dashboard")  # Replace Unicode temporarily
+# Alternatively, use escape sequence
+# st.title("\U0001F4CA Auto Report Processor & Dashboard")
 
 # Initialize session state for file uploads and checkboxes
 if "uploaded_file_1" not in st.session_state:
