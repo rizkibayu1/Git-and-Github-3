@@ -1,30 +1,28 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 import plotly.graph_objects as go
 from io import BytesIO
 
-# Streamlit App Title
-st.title("Dashboard Monitoring AOS")
-
-# Initialize session state for file uploads
-if "uploaded_file_overdue" not in st.session_state:
-    st.session_state.uploaded_file_overdue = None
-if "uploaded_file_opname" not in st.session_state:
-    st.session_state.uploaded_file_opname = None
-
-# Tabs for Piutang Overdue and Opname Faktur
-tab1, tab2 = st.tabs(["📊 Piutang Overdue", "📋 Opname Faktur"])
-
-# Function to format currency in Indonesian Rupiah format
+# Helper function to format numbers as Rupiah
 def format_rupiah(value):
-    return f"Rp{value:,.0f}".replace(",", ".")
+    try:
+        return f"Rp{value:,.0f}".replace(",", ".")
+    except (ValueError, TypeError):
+        return "Rp0"
 
-# Function to create an Excel file from a DataFrame
+# Helper function to convert dataframe to Excel
 def to_excel(df):
     output = BytesIO()
-    df.to_excel(output, index=False, engine="openpyxl")
-    output.seek(0)
-    return output
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Sheet1")
+        writer.save()
+    return output.getvalue()
+
+# Streamlit app
+st.title("Dashboard Monitoring AOS")
+
+# Tab layout
+tab1, tab2 = st.tabs(["Piutang Overdue", "Opname Faktur"])
 
 # Tab 1: Piutang Overdue
 with tab1:
@@ -54,6 +52,10 @@ with tab1:
                     df["MTXVAL"] = df["MTXVAL"].astype(str).str.replace(r"[^\d]", "", regex=True)
                     df["MTXVAL"] = pd.to_numeric(df["MTXVAL"], errors="coerce").fillna(0)
                     df["MTXVAL"] = df["MTXVAL"].apply(format_rupiah)
+                if "TGL INVOICE" in df.columns:
+                    df["TGL INVOICE"] = pd.to_datetime(df["TGL INVOICE"], format="%Y%m%d", errors="coerce").dt.strftime("%d-%m-%Y")
+                if "TGL JATUH TEMPO" in df.columns:
+                    df["TGL JATUH TEMPO"] = pd.to_datetime(df["TGL JATUH TEMPO"], format="%Y%m%d", errors="coerce").dt.strftime("%d-%m-%Y")
                 st.write("### Data Rapi")
                 st.dataframe(df)
 
@@ -76,7 +78,7 @@ with tab1:
                 df["MTXVAL_NUMERIC"] = df["MTXVAL"].str.replace(r"[^\d]", "", regex=True).astype(float)
 
                 summary = df.groupby("OVER DUE")["MTXVAL_NUMERIC"].agg(["sum", "count"]).reset_index()
-                summary["MTXVAL_NUMERIC"] = summary["sum"].apply(format_rupiah)
+                summary["MTXVAL_FORMATTED"] = summary["sum"].apply(format_rupiah)
 
                 fig = go.Figure()
 
@@ -86,7 +88,7 @@ with tab1:
                         x=summary["OVER DUE"],
                         y=summary["sum"],
                         name="Total Nominal (Rp)",
-                        text=summary["MTXVAL_NUMERIC"],
+                        text=summary["MTXVAL_FORMATTED"],
                         textposition="auto",
                     )
                 )
@@ -120,36 +122,29 @@ with tab1:
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
-
 # Tab 2: Opname Faktur
 with tab2:
     st.header("Opname Faktur")
     st.session_state.uploaded_file_opname = st.file_uploader(
-        "Upload Opname Faktur (.txt or .xlsx)", type=["txt", "xlsx"], key="file_opname"
+        "Upload Opname Faktur (.txt)", type=["txt"], key="file_opname"
     )
 
-    process_opname = st.checkbox("Proses Text to Column (Opname Faktur)")
-
-    if st.session_state.uploaded_file_opname and process_opname:
+    if st.session_state.uploaded_file_opname:
         try:
-            # Determine file type and read the file
             file = st.session_state.uploaded_file_opname
-            if file.name.endswith(".xlsx"):
-                df = pd.read_excel(file)
-            else:
-                df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
+            df = pd.read_csv(file, delimiter="|", on_bad_lines="skip", low_memory=False)
 
-            # Display processed data
-            st.write("### Data Rapi (Opname Faktur)")
+            st.write("### Data Opname Faktur (Text to Column)")
             st.dataframe(df)
 
-            # Download processed data as Excel
+            # Download processed data
             excel_file = to_excel(df)
             st.download_button(
-                label="Download as Excel",
+                label="Download Opname Faktur as Excel",
                 data=excel_file,
                 file_name="opname_faktur.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
+
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
