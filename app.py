@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import plotly.graph_objects as go
 from io import BytesIO
 
 # Streamlit App Title
@@ -84,18 +83,26 @@ def process_piutang_overdue(file):
                         MTXVAL_Sum=("MTXVAL", "sum"), Count=("MTXVAL", "size")
                     ).reset_index()
 
-                    fig, ax = plt.subplots(figsize=(10, 6))
-                    bars = ax.bar(overdue_summary["OVER DUE Category"], overdue_summary["MTXVAL_Sum"])
-                    for bar, count, sum_val in zip(bars, overdue_summary["Count"], overdue_summary["MTXVAL_Sum"]):
-                        yval = bar.get_height()
-                        label = f"Rp{yval:,.0f}\nCount: {count}"
-                        ax.text(bar.get_x() + bar.get_width() / 2, yval + 50000, label, ha="center", fontsize=10)
-
-                    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"Rp{x:,.0f}"))
-                    ax.set_xlabel("OVER DUE Categories")
-                    ax.set_ylabel("Sum of MTXVAL")
-                    ax.set_title("Grafik Over Due")
-                    st.pyplot(fig)
+                    # Interactive Plotly chart
+                    fig = go.Figure()
+                    fig.add_trace(
+                        go.Bar(
+                            x=overdue_summary["OVER DUE Category"],
+                            y=overdue_summary["MTXVAL_Sum"],
+                            text=overdue_summary["Count"],
+                            texttemplate="%{y:,.0f}<br>Count: %{text}",
+                            textposition="outside",
+                            marker=dict(color="skyblue"),
+                        )
+                    )
+                    fig.update_layout(
+                        title="Grafik Over Due",
+                        xaxis_title="OVER DUE Categories",
+                        yaxis_title="Sum of MTXVAL",
+                        yaxis=dict(tickprefix="Rp", separator=","),
+                        template="plotly_white",
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
 
