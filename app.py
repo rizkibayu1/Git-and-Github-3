@@ -99,9 +99,10 @@ def process_piutang_overdue(file):
                         title="Grafik Over Due",
                         xaxis_title="OVER DUE Categories",
                         yaxis_title="Sum of MTXVAL",
-                        yaxis=dict(tickprefix="Rp", separator=","),
+                        yaxis=dict(tickprefix="Rp", tickformat=",.0f"),
                         template="plotly_white",
                     )
+
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("The required columns 'OVER DUE' or 'MTXVAL' are missing in the data.")
